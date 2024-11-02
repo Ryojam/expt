@@ -12,7 +12,10 @@ long long dp[109][100009]; //dp[i][j]: 商品iを選ぶとき、値段の合計j
 //メインプログラム
 int main(){
 //  Step #2. 標準入力
-    cin >> N >> L;
+    cout << "商品の個数を入力" << endl;
+    cin >> N;
+    cout << "上限の値段を入力" << endl;
+    cin >> L;
     for(int i=1;i<=N;i++){
         cin >> menu[i] >>V[i] >> W[i];
     }
