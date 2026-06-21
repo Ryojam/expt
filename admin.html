@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>管理画面</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #05070f;
+        color: white;
+        padding: 12px;
+      }
+
+      .panel {
+        background: #111827;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 10px;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: none;
+        background: #00ff99;
+        font-weight: bold;
+      }
+
+      button.danger {
+        background: #ff3355;
+      }
+
+      pre {
+        background: #000;
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>管理画面</h1>
+
+    <div class="panel">
+      <input id="pass" type="password" placeholder="パスワード" />
+      <button onclick="login()">ログイン</button>
+    </div>
+
+    <div id="admin" style="display: none">
+      <div class="panel">
+        <h3>レース</h3>
+
+        <select id="winner">
+          <option>A</option>
+          <option>B</option>
+          <option>C</option>
+          <option>D</option>
+          <option>E</option>
+        </select>
+
+        <button onclick="race()">レース実行</button>
+      </div>
+
+      <div class="panel">
+        <button class="danger" onclick="closeBet()">締切</button>
+        <button onclick="openBet()">再開</button>
+      </div>
+
+      <pre id="log"></pre>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:8000";
+      let token = "";
+
+      async function login() {
+        const pass = document.getElementById("pass").value;
+
+        const res = await fetch(`${API}/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pass }),
+        });
+
+        const d = await res.json();
+        if (!d.ok) return alert("NG");
+
+        token = "keiba2026-admin";
+        document.getElementById("admin").style.display = "block";
+      }
+
+      async function race() {
+        const winner = document.getElementById("winner").value;
+
+        const res = await fetch(`${API}/race`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ winner, token }),
+        });
+
+        const d = await res.json();
+        document.getElementById("log").innerText = JSON.stringify(d, null, 2);
+      }
+
+      async function closeBet() {
+        await fetch(`${API}/admin/bet_close`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+      }
+
+      async function openBet() {
+        await fetch(`${API}/admin/bet_open`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+      }
+    </script>
+  </body>
+</html>

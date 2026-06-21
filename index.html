@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>競馬ゲーム</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #05070f);
+        color: white;
+        margin: 0;
+        padding: 12px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #00ff99;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: auto;
+      }
+
+      .panel {
+        background: rgba(20, 26, 42, 0.9);
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 6px 0;
+        border-radius: 8px;
+        border: none;
+      }
+
+      button {
+        background: #00ff99;
+        font-weight: bold;
+      }
+
+      button:hover {
+        background: #00cc77;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .card {
+        background: #111827;
+        padding: 8px;
+        border-left: 4px solid #00ff99;
+        margin: 5px 0;
+      }
+
+      #msg {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>🏇 競馬ゲーム</h1>
+
+      <div class="panel">
+        <input id="name" placeholder="名前" />
+        <button onclick="createUser()">ユーザー作成</button>
+      </div>
+
+      <div class="panel">
+        <select id="horse">
+          <option>A</option>
+          <option>B</option>
+          <option>C</option>
+          <option>D</option>
+          <option>E</option>
+        </select>
+        <input id="amount" type="number" placeholder="ポイント" />
+        <button onclick="bet()">ベット</button>
+        <button onclick="cancelBet()">解除</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h3>📊 オッズ</h3>
+          <div id="odds"></div>
+        </div>
+
+        <div class="panel">
+          <h3>🏆 ランキング</h3>
+          <button onclick="loadRanking()">更新</button>
+          <div id="ranking"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>メッセージ</h3>
+        <div id="msg"></div>
+      </div>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:8000";
+
+      function msg(t) {
+        document.getElementById("msg").innerText = t;
+      }
+
+      async function createUser() {
+        const name = document.getElementById("name").value;
+
+        const res = await fetch(`${API}/create_user/${name}`, {
+          method: "POST",
+        });
+
+        const data = await res.json();
+        msg("ユーザー作成完了");
+      }
+
+      async function bet() {
+        const name = document.getElementById("name").value;
+        const horse = document.getElementById("horse").value;
+        const amount = Number(document.getElementById("amount").value);
+
+        const res = await fetch(`${API}/bet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, horse, amount }),
+        });
+
+        const data = await res.json();
+        msg(data.error ? data.error : "ベット成功");
+      }
+
+      async function cancelBet() {
+        const name = document.getElementById("name").value;
+
+        const res = await fetch(`${API}/cancel_bet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+
+        const data = await res.json();
+        msg(data.error ? data.error : "解除完了");
+      }
+
+      async function updateOdds() {
+        const data = await (await fetch(`${API}/popularity`)).json();
+
+        const box = document.getElementById("odds");
+
+        box.innerHTML = data.popularity
+          .map(
+            (p) => `
+    <div class="card">
+      <b>${p.horse}</b><br>
+      ${p.percent}% / ${p.odds}倍
+    </div>
+  `
+          )
+          .join("");
+      }
+
+      async function loadRanking() {
+        const data = await (await fetch(`${API}/ranking`)).json();
+
+        document.getElementById("ranking").innerHTML = data.ranking
+          .map(
+            (r) => `
+      <div class="card">${r.rank}位 ${r.name} ${r.point}pt</div>
+    `
+          )
+          .join("");
+      }
+
+      setInterval(updateOdds, 3000);
+      updateOdds();
+    </script>
+  </body>
+</html>
